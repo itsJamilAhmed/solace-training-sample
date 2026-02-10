@@ -144,14 +144,84 @@
       <details class="card" id="step4Card">
         <summary>Step 4: Publish a message</summary>
         <div class="card-body">
-          <p class="section-desc">Publish messages to a topic. Subscribers matching the topic will receive them.</p>
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <p class="section-desc" style="margin:0;">Publish messages to a topic. Subscribers matching the topic will receive them.</p>
+            <div class="style-toggle" style="margin-left:12px;">
+              <label style="font-weight:600;margin-right:8px;">Topic Taxonomy Style</label>
+              <label style="margin-right:6px;"><input type="radio" name="publishStyle" value="basic" checked /> Basic</label>
+              <label><input type="radio" name="publishStyle" value="advanced" /> Advanced</label>
+            </div>
+          </div>
 
-          <div class="form-grid form-grid-single">
-            <label for="pubTopic">Topic</label>
-            <input id="pubTopic" type="text" value="workshop/your-name-here" />
+          <!-- Basic mode fields -->
+          <div id="basicOptions">
+            <div class="form-grid form-grid-single" style="margin-top:10px;">
+              <label for="pubTopic">Topic</label>
+              <input id="pubTopic" type="text" value="workshop/message" />
 
-            <label for="payload">Payload</label>
-            <textarea id="payload" rows="4">Hello World!</textarea>
+              <label for="payload">Payload</label>
+              <textarea id="payload" rows="4">Hello World!</textarea>
+            </div>
+          </div>
+
+          <div id="advancedOptions" class="is-hidden">
+            <div style="display:flex;align-items:center;justify-content:space-between;">
+              <div style="font-weight:600;">Topic Taxonomy Builder</div>
+            </div>
+
+            <div class="form-grid" style="margin-top:10px;grid-template-columns: repeat(7, 1fr);gap:8px;">
+              <div>
+                <label for="tbDomain">Domain</label>
+                <input id="tbDomain" type="text" placeholder="{app-domain}" value="workshop"/>
+              </div>
+              <div>
+                <label for="tbNoun">Noun</label>
+                <input id="tbNoun" type="text" placeholder="{data-object}" value="hello-message"/>
+              </div>
+              <div>
+                <label for="tbVerb">Verb</label>
+                <input id="tbVerb" type="text" placeholder="{what-happened}" value="announced"/>
+              </div>
+              <div>
+                <label for="tbProp1">Property</label>
+                <input id="tbProp1" type="text" placeholder="{metadata-1}" value="uk" />
+              </div>
+              <div>
+                <label for="tbProp2">Property</label>
+                <input id="tbProp2" type="text" placeholder="{metadata-2}" value="en" />
+              </div>
+              <div>
+                <label for="tbProp3">Property</label>
+                <input id="tbProp3" type="text" placeholder="{metadata-3}" value="0001" />
+              </div>
+              <div style="display:flex;align-items:center;justify-content:center;">
+                <button type="button" class="ports-btn" id="clearTopicBuilder">Clear All</button>
+              </div>
+            </div>
+
+            <div class="form-grid form-grid-single" style="margin-top:10px;">
+              <label for="generatedTopic">Topic</label>
+              <input id="generatedTopic" type="text" />
+
+              <label for="payloadAdvanced">Payload</label>
+              <textarea id="payloadAdvanced" rows="9">{
+  "eventType": "Hello World Message",
+  "eventAction": "Announced",
+  "country": "United States",
+  "language": "English",
+  "sender": "John Doe",
+  "timestamp": "2024-01-01T00:00:00Z",
+  "msgId": "0001"
+}</textarea>
+            </div>
+
+            <div class="form-grid form-grid-single" style="margin-top:10px;">
+              <label for="advDeliveryMode">Delivery Mode</label>
+              <div class="delivery-toggle" id="advDeliveryMode">
+                <label style="margin-right:6px;"><input type="radio" name="advDeliveryMode" value="DIRECT" checked /> Direct</label>
+                <label><input type="radio" name="advDeliveryMode" value="PERSISTENT" /> Persistent</label>
+              </div>
+            </div>
           </div>
 
           <button type="button" class="ports-btn ports-btn-primary" id="publish">Publish Message</button>

@@ -40,6 +40,29 @@
     document.getElementById('publish').addEventListener('click', pubsub.publish);
     document.getElementById('addSub').addEventListener('click', pubsub.addSubscriptionFromInput);
 
+    // Publish style selector (Basic / Advanced)
+    var styleEls = document.getElementsByName('publishStyle');
+    for (var si = 0; si < styleEls.length; si += 1) {
+      styleEls[si].addEventListener('change', function () { pubsub.togglePublishStyle(); });
+    }
+
+    // Topic builder controls (advanced mode)
+    var clearBtn = document.getElementById('clearTopicBuilder');
+    if (clearBtn) { clearBtn.addEventListener('click', function () { pubsub.clearTopicBuilder(); }); }
+
+    // Live update of generated topic as inputs change
+    var tbIds = ['tbDomain', 'tbNoun', 'tbVerb', 'tbProp1', 'tbProp2', 'tbProp3'];
+    tbIds.forEach(function (id) {
+      var el = document.getElementById(id);
+      if (el) {
+        el.addEventListener('input', function () { pubsub.generateTopicFromBuilder(false); });
+      }
+    });
+
+    // When style toggles, show/hide the corresponding blocks
+    // Ensure initial visibility is correct
+    pubsub.togglePublishStyle();
+
     var clearLogBtn = document.getElementById('clearLog');
     if (clearLogBtn) {
       clearLogBtn.addEventListener('click', pubsub.clearLog);
@@ -67,6 +90,113 @@
     });
 
     pubsub.enableSmoothDetails();
+    pubsub.togglePublishStyle();
+
+    // Try to auto-fill topic-builder from browser-only signals (no external calls)
+    try {
+      var navLang = (navigator.languages && navigator.languages[0]) || navigator.language || '';
+      var tz = (typeof Intl !== 'undefined' && Intl.DateTimeFormat && Intl.DateTimeFormat().resolvedOptions) ? (Intl.DateTimeFormat().resolvedOptions().timeZone || '') : '';
+      if (navLang) {
+        var parts = navLang.split(/[-_]/);
+        var primaryLang = parts[0] || '';
+        var region = (parts[1] || '');
+
+        // Determine a long country name from the region code (if available)
+        var countryLong = '';
+        try {
+          if (region) {
+            var regionCode = region.toUpperCase();
+            if (regionCode === 'UK') { regionCode = 'GB'; }
+            if (typeof Intl !== 'undefined' && Intl.DisplayNames) {
+              try {
+                var rd = new Intl.DisplayNames([navigator.language || 'en'], { type: 'region' });
+                var longName = rd.of(regionCode);
+                if (longName) { countryLong = longName; }
+              } catch (e) { /* ignore */ }
+            }
+            if (!countryLong) { countryLong = regionCode; }
+          }
+        } catch (e) { /* ignore */ }
+
+        var domainEl = document.getElementById('tbDomain');
+        var prop1El = document.getElementById('tbProp1');
+        var prop2El = document.getElementById('tbProp2');
+        var prop3El = document.getElementById('tbProp3');
+
+        // Normalize domain/region code for tbDomain (use lower-case country code, convert UK->GB)
+        var normalizedRegion = (region || '').toLowerCase();
+        if (normalizedRegion === 'uk') { normalizedRegion = 'gb'; }
+        if (domainEl && !domainEl.value && normalizedRegion) { domainEl.value = normalizedRegion; }
+
+        // Property 1: country name in lower-case kebab-case (remove spaces)
+        if (prop1El && !prop1El.value && countryLong) {
+          var kebab = countryLong.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+          prop1El.value = kebab;
+        }
+
+        // Property 2: language code (short)
+        if (prop2El && !prop2El.value && primaryLang) {
+          prop2El.value = primaryLang;
+        }
+
+        // Property 3: generate a random 4-digit id (0001-9999) used for msgId
+        var rndNum = Math.floor(Math.random() * 9999) + 1;
+        var rndStr = String(rndNum).padStart(4, '0');
+        if (prop3El) {
+          prop3El.value = rndStr;
+        }
+
+        // Update the JSON payload in advanced editor to include long language and country
+        try {
+          var payloadEl = document.getElementById('payloadAdvanced');
+          if (payloadEl) {
+            var cur = payloadEl.value.trim();
+            var obj = null;
+            try {
+              obj = cur ? JSON.parse(cur) : {};
+            } catch (e) {
+              obj = {};
+            }
+            if (!obj || typeof obj !== 'object') { obj = {}; }
+
+            // Language long form
+            if (primaryLang) {
+              var displayLang = primaryLang;
+              try {
+                if (typeof Intl !== 'undefined' && Intl.DisplayNames) {
+                  try {
+                    var dn = new Intl.DisplayNames([navigator.language || 'en'], { type: 'language' });
+                    var longName = dn.of(primaryLang);
+                    if (longName) { displayLang = longName; }
+                  } catch (e) { /* ignore */ }
+                }
+              } catch (e) { /* ignore */ }
+              obj.language = displayLang;
+            }
+
+            // Country long form
+            if (countryLong) { obj.country = countryLong; }
+
+            // Message ID and timestamp
+            try {
+              obj.msgId = rndStr;
+            } catch (e) { /* ignore */ }
+            try {
+              var now = new Date();
+              var iso = now.toISOString().replace(/\.\d{3}Z$/, 'Z');
+              obj.timestamp = iso;
+            } catch (e) { /* ignore */ }
+
+            payloadEl.value = JSON.stringify(obj, null, 2);
+          }
+        } catch (e) { /* ignore json update errors */ }
+
+        // Reflect into generated topic preview
+        pubsub.generateTopicFromBuilder(false);
+      }
+    } catch (e) {
+      /* ignore auto-fill errors */
+    }
 
     pubsub.updateUi();
     pubsub.renderSubscriptions();
@@ -303,6 +433,47 @@
     titleEl.textContent = title || '';
     hintEl.textContent = hint || '';
     banner.classList.remove('is-hidden');
+  };
+
+  pubsub.togglePublishStyle = function () {
+    var adv = document.getElementById('advancedOptions');
+    var sel = document.querySelector('input[name="publishStyle"]:checked');
+    if (!adv || !sel) { return; }
+    var basic = document.getElementById('basicOptions');
+    if (sel.value === 'advanced') {
+      adv.classList.remove('is-hidden');
+      if (basic) { basic.classList.add('is-hidden'); }
+      // when advanced opens, ensure generated topic reflects current builder
+      pubsub.generateTopicFromBuilder(false);
+    } else {
+      if (!adv.classList.contains('is-hidden')) { adv.classList.add('is-hidden'); }
+      if (basic) { basic.classList.remove('is-hidden'); }
+    }
+  };
+
+  pubsub.generateTopicFromBuilder = function (setToPubTopic) {
+    if (setToPubTopic === undefined) { setToPubTopic = false; }
+    var parts = [];
+    ['tbDomain', 'tbNoun', 'tbVerb', 'tbProp1', 'tbProp2', 'tbProp3'].forEach(function (id) {
+      var v = document.getElementById(id);
+      if (v && v.value && v.value.trim()) {
+        parts.push(v.value.trim());
+      }
+    });
+    var topic = parts.join('/');
+    var genEl = document.getElementById('generatedTopic');
+    if (genEl) { genEl.value = topic; }
+    if (setToPubTopic) {
+      var pubEl = document.getElementById('pubTopic');
+      if (pubEl) { pubEl.value = topic; }
+    }
+  };
+
+  pubsub.clearTopicBuilder = function () {
+    ['tbDomain','tbNoun', 'tbVerb', 'tbProp1', 'tbProp2', 'tbProp3', 'generatedTopic'].forEach(function (id) {
+      var el = document.getElementById(id);
+      if (el) { el.value = ''; }
+    });
   };
 
   pubsub.clearPubStatus = function () {
@@ -873,8 +1044,18 @@
       return;
     }
 
-    var topic = document.getElementById('pubTopic').value;
-    var payload = document.getElementById('payload').value;
+    var styleEl = document.querySelector('input[name="publishStyle"]:checked');
+    var style = styleEl ? styleEl.value : 'basic';
+
+    var topic = '';
+    var payload = '';
+    if (style === 'advanced') {
+      topic = document.getElementById('generatedTopic').value;
+      payload = document.getElementById('payloadAdvanced').value;
+    } else {
+      topic = document.getElementById('pubTopic').value;
+      payload = document.getElementById('payload').value;
+    }
 
     if (!topic) {
       pubsub.setPubStatus('warn', 'Missing topic', 'Enter a topic in Step 4 before publishing.');
@@ -893,8 +1074,26 @@
       return;
     }
 
+    // Delivery mode: if advanced, use advanced delivery radio; otherwise default DIRECT
+    try {
+      if (style === 'advanced') {
+        var advDm = document.querySelector('input[name="advDeliveryMode"]:checked');
+        if (advDm && advDm.value === 'PERSISTENT') {
+          msg.setDeliveryMode(solace.MessageDeliveryModeType.PERSISTENT);
+        } else {
+          msg.setDeliveryMode(solace.MessageDeliveryModeType.DIRECT);
+        }
+      } else {
+        msg.setDeliveryMode(solace.MessageDeliveryModeType.DIRECT);
+      }
+    } catch (e3) {
+      var detail3 = (e3 && e3.message) ? e3.message : e3.toString();
+      pubsub.setPubStatus('error', 'Invalid publish option', detail3);
+      pubsub.log('Publish failed: ' + detail3);
+      return;
+    }
+
     msg.setSdtContainer(solace.SDTField.create(solace.SDTFieldType.STRING, payload));
-    msg.setDeliveryMode(solace.MessageDeliveryModeType.DIRECT);
 
     try {
       pubsub.session.send(msg);

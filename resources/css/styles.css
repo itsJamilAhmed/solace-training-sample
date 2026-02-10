@@ -313,3 +313,68 @@ textarea:focus {
     line-height: 1.2;
   }
 }
+
+/* Compact style toggle in Step 4: keep radios on a single row */
+#step4Card .style-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+#step4Card .style-toggle label {
+  margin: 0;
+  font-size: 13px;
+}
+
+#step4Card .style-toggle input[type="radio"] {
+  width: 14px;
+  height: 14px;
+  vertical-align: middle;
+}
+
+@media (max-width: 520px) {
+  /* On narrow screens keep the toggle compact but allow wrapping if absolutely needed */
+  #step4Card .style-toggle { gap: 6px; }
+}
+
+/* Compact delivery mode toggle in Advanced panel */
+#step4Card .delivery-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+#step4Card .delivery-toggle label {
+  margin: 0;
+  font-size: 13px;
+}
+
+#step4Card .delivery-toggle input[type="radio"] {
+  width: 14px;
+  height: 14px;
+  vertical-align: middle;
+}
+
+@media (max-width: 520px) {
+  #step4Card .delivery-toggle { gap: 6px; }
+}
+
+/* Advanced panel visual separation and spacing */
+#step4Card #advancedOptions,
+#step4Card #basicOptions {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #e9eef2;
+}
+
+#step4Card #advancedOptions > div:first-child,
+#step4Card #basicOptions > .form-grid {
+  margin-bottom: 10px;
+}
+
+/* Add spacing before Publish button to separate from advanced controls */
+#publish {
+  margin-top: 14px;
+}
