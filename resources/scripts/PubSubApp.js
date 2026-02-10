@@ -700,8 +700,7 @@
 
     pubsub.setConnectButtonAppearance();
 
-    if (publishBtn) { publishBtn.disabled = !pubsub.state.connected; }
-    if (addSubBtn) { addSubBtn.disabled = !pubsub.state.connected; }
+    if (publishBtn) { publishBtn.disabled = false; }
 
     pubsub.updateSubscriptionActionButtons();
   };
