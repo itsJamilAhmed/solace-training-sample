@@ -106,7 +106,6 @@
         try {
           if (region) {
             var regionCode = region.toUpperCase();
-            if (regionCode === 'UK') { regionCode = 'GB'; }
             if (typeof Intl !== 'undefined' && Intl.DisplayNames) {
               try {
                 var rd = new Intl.DisplayNames([navigator.language || 'en'], { type: 'region' });
@@ -123,20 +122,30 @@
         var prop2El = document.getElementById('tbProp2');
         var prop3El = document.getElementById('tbProp3');
 
-        // Normalize domain/region code for tbDomain (use lower-case country code, convert UK->GB)
+        // Normalize domain/region code for tbDomain (use lower-case region code)
         var normalizedRegion = (region || '').toLowerCase();
-        if (normalizedRegion === 'uk') { normalizedRegion = 'gb'; }
         if (domainEl && !domainEl.value && normalizedRegion) { domainEl.value = normalizedRegion; }
 
         // Property 1: country name in lower-case kebab-case (remove spaces)
-        if (prop1El && !prop1El.value && countryLong) {
+        if (prop1El && countryLong) {
           var kebab = countryLong.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
           prop1El.value = kebab;
         }
 
-        // Property 2: language code (short)
-        if (prop2El && !prop2El.value && primaryLang) {
-          prop2El.value = primaryLang;
+        // Property 2: language name in lower-case kebab-case (long form to match JSON)
+        if (prop2El && primaryLang) {
+          var displayLang = primaryLang;
+          try {
+            if (typeof Intl !== 'undefined' && Intl.DisplayNames) {
+              try {
+                var dn = new Intl.DisplayNames([navigator.language || 'en'], { type: 'language' });
+                var longName = dn.of(primaryLang);
+                if (longName) { displayLang = longName; }
+              } catch (e) { /* ignore */ }
+            }
+          } catch (e) { /* ignore */ }
+          var langKebab = displayLang.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+          prop2El.value = langKebab;
         }
 
         // Property 3: generate a random 4-digit id (0001-9999) used for msgId
