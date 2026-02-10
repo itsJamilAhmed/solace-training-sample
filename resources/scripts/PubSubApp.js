@@ -177,6 +177,9 @@
             // Country long form
             if (countryLong) { obj.country = countryLong; }
 
+            // Timezone
+            if (tz) { obj.timezone = tz; }
+
             // Message ID and timestamp
             try {
               obj.msgId = rndStr;

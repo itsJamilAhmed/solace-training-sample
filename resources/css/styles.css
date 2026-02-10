@@ -333,44 +333,56 @@ textarea:focus {
   vertical-align: middle;
 }
 
+/* Step 4 specific narrow-screen stacking at 520px */
 @media (max-width: 520px) {
-  /* On narrow screens keep the toggle compact but allow wrapping if absolutely needed */
-  #step4Card .style-toggle { gap: 6px; }
-}
-
-/* Small-screen stacking: move the style toggle under the description and stack builder fields */
-@media (max-width: 520px) {
-  /* Stack the top area inside Step 4 (description + toggle). Use both the container and
-     the first-row child to be resilient to small markup differences. */
-  #step4Card .card-body,
-  #step4Card .card-body > div:first-child {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 8px;
-  }
-
-  /* Align the compact style toggle under the description and make it block-level */
+  /* Stack the style toggle vertically */
   #step4Card .style-toggle {
-    margin-left: 0 !important;
-    display: block;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    margin-top: 8px;
+    gap: 6px !important;
   }
 
-  /* Force form grids inside Step 4 to stack into a single column */
-  #step4Card .form-grid,
-  #step4Card .form-grid-single,
-  #step4Card .form-grid[style] {
+  #step4Card .style-toggle label {
+    display: flex !important;
+    align-items: center !important;
+    margin-right: 0 !important;
+    margin-bottom: 0 !important;
+    gap: 6px;
+  }
+
+  /* Stack the topic taxonomy builder grid from 7 columns to single column */
+  #step4Card .card-body > div > .form-grid[style*="repeat(7"] {
     grid-template-columns: 1fr !important;
+    gap: 8px !important;
   }
 
-  /* Ensure each direct child of the grid fills the row */
-  #step4Card .form-grid > * {
+  #step4Card .card-body > div > .form-grid[style*="repeat(7"] > div {
     width: 100%;
   }
 
-  /* Make the clear button full width under its grid cell */
-  #step4Card button#clearTopicBuilder {
-    width: 100%;
+  /* Stack form-grid-single (topic builder and payload area) into single column */
+  #step4Card .form-grid-single {
+    grid-template-columns: 1fr !important;
+    gap: 6px 0 !important;
+  }
+
+  #step4Card .form-grid-single label {
+    margin-top: 8px;
+  }
+
+  #step4Card .form-grid-single input,
+  #step4Card .form-grid-single textarea {
+    width: 100% !important;
+    max-width: none;
+  }
+
+  /* Keep delivery toggle inline but ensure label alignment */
+  #step4Card .delivery-toggle label {
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px;
   }
 }
 
@@ -391,10 +403,6 @@ textarea:focus {
   width: 14px;
   height: 14px;
   vertical-align: middle;
-}
-
-@media (max-width: 520px) {
-  #step4Card .delivery-toggle { gap: 6px; }
 }
 
 /* Advanced panel visual separation and spacing */
