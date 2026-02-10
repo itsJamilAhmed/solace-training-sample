@@ -128,7 +128,7 @@
 
         // Property 1: country name in lower-case kebab-case (remove spaces)
         if (prop1El && countryLong) {
-          var kebab = countryLong.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+          var kebab = countryLong.toLowerCase().replace(/\s+/g, '-').replace(/^-+|-+$/g, '');
           prop1El.value = kebab;
         }
 
@@ -144,7 +144,7 @@
               } catch (e) { /* ignore */ }
             }
           } catch (e) { /* ignore */ }
-          var langKebab = displayLang.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+          var langKebab = displayLang.toLowerCase().replace(/\s+/g, '-').replace(/^-+|-+$/g, '');
           prop2El.value = langKebab;
         }
 
