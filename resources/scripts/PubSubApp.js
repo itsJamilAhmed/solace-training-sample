@@ -701,6 +701,7 @@
     pubsub.setConnectButtonAppearance();
 
     if (publishBtn) { publishBtn.disabled = false; }
+    if (addSubBtn) { addSubBtn.disabled = false; }
 
     pubsub.updateSubscriptionActionButtons();
   };
@@ -1050,7 +1051,8 @@
     pubsub.clearPubStatus();
 
     if (!pubsub.session || !pubsub.state.connected) {
-      pubsub.setPubStatus('warn', 'Not connected', 'Connect before publishing.');
+      pubsub.setPubStatus('warn', 'Cannot publish', 'You must connect to a broker first. Enter connection details in Step 1, then click Connect.');
+      pubsub.openDetails('step4Card');
       pubsub.log('Publish blocked: not connected.');
       return;
     }
