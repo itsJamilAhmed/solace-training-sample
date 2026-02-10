@@ -340,7 +340,9 @@ textarea:focus {
 
 /* Small-screen stacking: move the style toggle under the description and stack builder fields */
 @media (max-width: 520px) {
-  /* The top row inside Step 4 (description + toggle) should stack vertically */
+  /* Stack the top area inside Step 4 (description + toggle). Use both the container and
+     the first-row child to be resilient to small markup differences. */
+  #step4Card .card-body,
   #step4Card .card-body > div:first-child {
     display: flex;
     flex-direction: column;
@@ -348,9 +350,10 @@ textarea:focus {
     gap: 8px;
   }
 
-  /* Remove left margin applied to .style-toggle so it aligns under the description */
+  /* Align the compact style toggle under the description and make it block-level */
   #step4Card .style-toggle {
     margin-left: 0 !important;
+    display: block;
   }
 
   /* Force form grids inside Step 4 to stack into a single column */
@@ -360,8 +363,13 @@ textarea:focus {
     grid-template-columns: 1fr !important;
   }
 
-  /* Make the clear button center under each input row */
-  #step4Card .form-grid > div > button#clearTopicBuilder {
+  /* Ensure each direct child of the grid fills the row */
+  #step4Card .form-grid > * {
+    width: 100%;
+  }
+
+  /* Make the clear button full width under its grid cell */
+  #step4Card button#clearTopicBuilder {
     width: 100%;
   }
 }
