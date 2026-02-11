@@ -26,6 +26,34 @@ body {
   padding: 0 16px;
 }
 
+.app-footer {
+  margin: 10px auto 20px;
+  padding: 0 16px;
+  max-width: 1100px;
+}
+
+.github-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #1f2a37;
+  text-decoration: none;
+  border: 1px solid #cfd4d9;
+  border-radius: 6px;
+  background: #ffffff;
+  padding: 8px 12px;
+  font-size: 13px;
+}
+
+.github-link:hover {
+  background: #f5f7fa;
+}
+
+.github-icon {
+  width: 16px;
+  height: 16px;
+}
+
 /* Card / collapsible sections */
 .card {
   background: #ffffff;
