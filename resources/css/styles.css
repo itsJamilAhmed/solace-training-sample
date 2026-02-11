@@ -257,8 +257,44 @@ textarea:focus {
 }
 
 /* Textareas and action rows */
-#messages, #log {
+#log {
   max-width: 1000px;
+}
+
+.message-stream {
+  width: 100%;
+  max-width: 1000px;
+  box-sizing: border-box;
+  font-family: monospace;
+  font-size: 13px;
+  line-height: 1.35;
+  border-radius: 6px;
+  border: 1px solid #cfd4d9;
+  background: #ffffff;
+  padding: 6px 8px;
+  height: 230px;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.message-row {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  padding: 6px 8px;
+  border-radius: 4px;
+  margin-bottom: 6px;
+}
+
+.message-row-odd {
+  background: #f7fbff;
+}
+
+.message-row-even {
+  background: #eef3f8;
+}
+
+.message-row:last-child {
+  margin-bottom: 0;
 }
 
 .below-box-actions {
@@ -278,8 +314,19 @@ textarea:focus {
 }
 
 .pub-sub-suggestions-label {
+  overflow: hidden;
   margin-top: 0;
   margin-bottom: 8px;
+  max-height: 0;
+  opacity: 0;
+  transform: translateY(-6px);
+  transition: max-height 260ms ease, opacity 200ms ease, transform 260ms ease;
+}
+
+.pub-sub-suggestions-label.is-visible {
+  max-height: 220px;
+  opacity: 1;
+  transform: translateY(0);
 }
 
 .pub-sub-suggestions-title {
@@ -494,6 +541,33 @@ textarea:focus {
 #step4Card #advancedOptions > div:first-child,
 #step4Card #basicOptions > .form-grid {
   margin-bottom: 10px;
+}
+
+#step4Card #topicBuilderSection {
+  overflow: hidden;
+  max-height: 420px;
+  opacity: 1;
+  background: #f4f9ff;
+  border: 1px solid #d7e6f5;
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-bottom: 10px;
+  transition: max-height 300ms ease, opacity 220ms ease;
+}
+
+#step4Card #topicBuilderSection.is-collapsed {
+  max-height: 0;
+  opacity: 0;
+}
+
+#step4Card #advancedOptions > #topicBuilderSection.is-collapsed {
+  margin-bottom: 0;
+}
+
+#step4Card #advancedOptions .topic-field-divider {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #e9eef2;
 }
 
 /* Add spacing before Publish button to separate from advanced controls */

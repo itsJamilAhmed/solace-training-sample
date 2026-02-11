@@ -13,7 +13,8 @@
   };
 
   pubsub.uiFlags = {
-    firstSubExpansionsDone: false
+    firstSubExpansionsDone: false,
+    messageRowCount: 0
   };
 
   pubsub.anim = {
@@ -340,14 +341,40 @@
     var sel = document.querySelector('input[name="publishStyle"]:checked');
     if (!adv || !sel) { return; }
     var basic = document.getElementById('basicOptions');
+    var builderSection = document.getElementById('topicBuilderSection');
+    var switchMs = 300;
+    if (pubsub.anim.publishStyleTimer) {
+      clearTimeout(pubsub.anim.publishStyleTimer);
+      pubsub.anim.publishStyleTimer = null;
+    }
     if (sel.value === 'advanced') {
+      if (builderSection) {
+        builderSection.classList.add('is-collapsed');
+      }
       adv.classList.remove('is-hidden');
       if (basic) { basic.classList.add('is-hidden'); }
+      if (builderSection) {
+        builderSection.getBoundingClientRect();
+        requestAnimationFrame(function () {
+          builderSection.classList.remove('is-collapsed');
+        });
+      }
       // when advanced opens, ensure generated topic reflects current builder
       pubsub.generateTopicFromBuilder(false);
     } else {
-      if (!adv.classList.contains('is-hidden')) { adv.classList.add('is-hidden'); }
-      if (basic) { basic.classList.remove('is-hidden'); }
+      if (adv.classList.contains('is-hidden')) {
+        if (basic) { basic.classList.remove('is-hidden'); }
+        pubsub.updatePubSubSuggestions();
+        return;
+      }
+      if (builderSection && !builderSection.classList.contains('is-collapsed')) {
+        builderSection.classList.add('is-collapsed');
+      }
+      pubsub.anim.publishStyleTimer = setTimeout(function () {
+        adv.classList.add('is-hidden');
+        if (basic) { basic.classList.remove('is-hidden'); }
+        pubsub.anim.publishStyleTimer = null;
+      }, switchMs);
       // when switching to basic, hide suggestions
       pubsub.updatePubSubSuggestions();
     }
@@ -560,8 +587,7 @@
     }
 
     if (!isAdvanced || !hasFields) {
-      suggestionsEl.style.display = 'none';
-      if (suggestionsLabelEl) { suggestionsLabelEl.style.display = 'none'; }
+      if (suggestionsLabelEl) { suggestionsLabelEl.classList.remove('is-visible'); }
       return;
     }
 
@@ -581,10 +607,6 @@
     }
 
     // Render pills
-    suggestionsEl.style.display = suggestions.length > 0 ? 'flex' : 'none';
-    if (suggestionsLabelEl) {
-      suggestionsLabelEl.style.display = suggestions.length > 0 ? 'block' : 'none';
-    }
     suggestions.forEach(function (pattern) {
       var pill = document.createElement('button');
       pill.type = 'button';
@@ -602,6 +624,13 @@
       });
       suggestionsEl.appendChild(pill);
     });
+    if (suggestionsLabelEl) {
+      if (suggestions.length > 0) {
+        suggestionsLabelEl.classList.add('is-visible');
+      } else {
+        suggestionsLabelEl.classList.remove('is-visible');
+      }
+    }
   };
 
   pubsub.clearPubStatus = function () {
@@ -683,12 +712,17 @@
       return;
     }
 
+    pubsub.uiFlags.messageRowCount += 1;
+    var row = document.createElement('div');
+    row.className = 'message-row ' + (pubsub.uiFlags.messageRowCount % 2 === 0 ? 'message-row-even' : 'message-row-odd');
+
     if (pretty.indexOf('\n') !== -1) {
-      el.value += ts + ' [' + topic + ']\n' + pretty + '\n\n';
+      row.textContent = ts + ' [' + topic + ']\n' + pretty;
     } else {
-      el.value += ts + ' [' + topic + '] ' + pretty + '\n';
+      row.textContent = ts + ' [' + topic + '] ' + pretty;
     }
 
+    el.appendChild(row);
     el.scrollTop = el.scrollHeight;
 
     pubsub.attributeMessageToSubscriptions(topic, nowTs);
@@ -780,7 +814,8 @@
   pubsub.clearMessages = function () {
     var el = document.getElementById('messages');
     if (el) {
-      el.value = '';
+      el.innerHTML = '';
+      pubsub.uiFlags.messageRowCount = 0;
     }
   };
 
