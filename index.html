@@ -79,6 +79,9 @@
 
             <label for="password">Password</label>
             <input id="password" type="password" value="password" />
+
+            <label for="displayName">What's your name?</label>
+            <input id="displayName" type="text" placeholder="Jane Smith" />
           </div>
         </div>
       </details>
@@ -201,7 +204,7 @@
                   <input id="tbProp3" type="text" placeholder="{metadata-3}" value="0001" />
                 </div>
                 <div class="topic-builder-clear-wrap">
-                  <button type="button" class="ports-btn" id="clearTopicBuilder">Clear All</button>
+                  <button type="button" class="ports-btn" id="clearTopicBuilder">Clear</button>
                   <button type="button" class="ports-btn" id="resetTopicBuilder">Reset</button>
                 </div>
               </div>
@@ -212,14 +215,15 @@
               <input id="generatedTopic" type="text" />
 
               <label for="payloadAdvanced">Payload</label>
-              <textarea id="payloadAdvanced" rows="11">{
-  "eventType": "Hello World Message",
+              <textarea id="payloadAdvanced" rows="12">{
+  "eventType": "Hello Message",
   "eventAction": "Announced",
   "country": "United States",
   "language": "English",
-  "sender": "John Doe",
+  "sender": "Jane Smith",
   "timezone": "America/New_York",
   "timestamp": "2024-01-01T00:00:00Z",
+  "message": "Hello from Jane Smith!",
   "sentiment": "😊",
   "msgId": "0001"
 }</textarea>
@@ -240,6 +244,15 @@
           <div id="pubStatusBanner" class="status-banner status-warn is-hidden section-status" role="status" aria-live="polite">
             <div class="status-title" id="pubStatusTitle"></div>
             <div class="status-hint" id="pubStatusHint"></div>
+          </div>
+
+          <div id="actionSuggestionBanner" class="status-banner action-suggestion-banner is-hidden section-status" role="status" aria-live="polite">
+            <div class="status-title" id="actionSuggestionTitle">Try Advanced Mode?</div>
+            <div class="status-hint" id="actionSuggestionHint">How about trying an advanced topic taxonomy and payload now?</div>
+            <div class="suggestion-actions">
+              <button type="button" class="ports-btn ports-btn-primary" id="actionSuggestionYes">Sure!</button>
+              <button type="button" class="ports-btn" id="actionSuggestionNo">No thanks!</button>
+            </div>
           </div>
         </div>
       </details>

@@ -17,6 +17,16 @@
     messageRowCount: 0
   };
 
+  pubsub.suggestionMachine = {
+    basicPublishCount: 0,
+    advancedPublishCount: 0,
+    advancedPayloadEdited: false,
+    advancedTried: false,
+    tryAdvancedState: 'pending',      // pending|suggested|dismissed|done
+    taxonomyState: 'pending',         // pending|suggested|dismissed|done
+    activeSuggestion: ''              // try_advanced|topic_taxonomy|''
+  };
+
   pubsub.anim = {
     durationMs: 340,     // Gentle
     easing: 'ease',
@@ -76,6 +86,32 @@
       clearMessagesBtn.addEventListener('click', pubsub.clearMessages);
     }
 
+    var sugYesBtn = document.getElementById('actionSuggestionYes');
+    if (sugYesBtn) {
+      sugYesBtn.addEventListener('click', function () {
+        pubsub.dispatchSuggestionEvent('suggestion_accept');
+      });
+    }
+    var sugNoBtn = document.getElementById('actionSuggestionNo');
+    if (sugNoBtn) {
+      sugNoBtn.addEventListener('click', function () {
+        pubsub.dispatchSuggestionEvent('suggestion_decline');
+      });
+    }
+    var payloadAdvEl = document.getElementById('payloadAdvanced');
+    if (payloadAdvEl) {
+      payloadAdvEl.addEventListener('input', function () {
+        pubsub.dispatchSuggestionEvent('advanced_payload_user_changed');
+      });
+    }
+    var displayNameEl = document.getElementById('displayName');
+    if (displayNameEl) {
+      displayNameEl.addEventListener('input', function () {
+        pubsub.syncAdvancedPayloadFromDisplayName();
+        pubsub.syncBasicPayloadFromDisplayName();
+      });
+    }
+
     // Delegate actions from the subscription table (Toggle Subscribe / Delete)
     document.getElementById('subsTbody').addEventListener('click', function (e) {
       var target = e.target;
@@ -98,6 +134,8 @@
     var initialTopicDefaults = pubsub.getTopicBuilderDefaults();
     pubsub.applyTopicBuilderValues(initialTopicDefaults);
     pubsub.syncAdvancedPayloadFromTopicDefaults(initialTopicDefaults);
+    pubsub.syncAdvancedPayloadFromDisplayName();
+    pubsub.syncBasicPayloadFromDisplayName();
 
     pubsub.updateUi();
     pubsub.renderSubscriptions();
@@ -105,7 +143,64 @@
     pubsub.setStatus('info', 'Disconnected', 'Enter your broker details in Step 1, then click Connect.');
     pubsub.clearSubStatus();
     pubsub.clearPubStatus();
+    pubsub.hideActionSuggestionBanner();
     pubsub.log('Ready. Enter broker details, then Connect.');
+  };
+
+  pubsub.getDisplayNameForPayload = function () {
+    var nameEl = document.getElementById('displayName');
+    if (!nameEl) {
+      return 'Jane Smith';
+    }
+    var name = (nameEl.value || '').trim();
+    if (name) {
+      return name;
+    }
+    var ph = (nameEl.placeholder || '').trim();
+    return ph || 'Jane Smith';
+  };
+
+  pubsub.syncAdvancedPayloadFromDisplayName = function () {
+    var payloadEl = document.getElementById('payloadAdvanced');
+    if (!payloadEl) {
+      return;
+    }
+
+    var obj;
+    try {
+      obj = JSON.parse(payloadEl.value);
+    } catch (e) {
+      return;
+    }
+    if (!obj || typeof obj !== 'object' || Array.isArray(obj)) {
+      return;
+    }
+
+    var displayName = pubsub.getDisplayNameForPayload();
+    obj.sender = displayName;
+    if (Object.prototype.hasOwnProperty.call(obj, 'Sender')) {
+      obj.Sender = displayName;
+    }
+    obj.message = 'Hello Message from ' + displayName;
+
+    payloadEl.value = JSON.stringify(obj, null, 2);
+  };
+
+  pubsub.syncBasicPayloadFromDisplayName = function () {
+    var nameEl = document.getElementById('displayName');
+    var payloadEl = document.getElementById('payload');
+    if (!payloadEl || !nameEl) {
+      return;
+    }
+
+    var enteredName = (nameEl.value || '').trim();
+    if (enteredName) {
+      payloadEl.value = 'Hello World! from ' + enteredName;
+      return;
+    }
+
+    // If no name is provided, keep the basic payload at the default message.
+    payloadEl.value = 'Hello World!';
   };
 
   pubsub.getDetailsBody = function (detailsEl) {
@@ -336,6 +431,145 @@
     banner.classList.remove('is-hidden');
   };
 
+  pubsub.showActionSuggestionBanner = function (suggestionId, title, hint) {
+    var banner = document.getElementById('actionSuggestionBanner');
+    var titleEl = document.getElementById('actionSuggestionTitle');
+    var hintEl = document.getElementById('actionSuggestionHint');
+    var yesBtn = document.getElementById('actionSuggestionYes');
+    if (!banner) {
+      return;
+    }
+    if (titleEl) { titleEl.textContent = title || ''; }
+    if (hintEl) { hintEl.textContent = hint || ''; }
+    pubsub.suggestionMachine.activeSuggestion = suggestionId || '';
+    banner.classList.remove('is-hidden');
+
+    // Ensure the suggestion is actually visible to the user.
+    pubsub.openDetails('step4Card');
+    setTimeout(function () {
+      try {
+        banner.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      } catch (e) {
+        banner.scrollIntoView();
+      }
+      if (yesBtn) {
+        try {
+          yesBtn.focus();
+        } catch (e2) { /* ignore */ }
+      }
+    }, 40);
+  };
+
+  pubsub.hideActionSuggestionBanner = function () {
+    var banner = document.getElementById('actionSuggestionBanner');
+    if (!banner) {
+      return;
+    }
+    pubsub.suggestionMachine.activeSuggestion = '';
+    if (!banner.classList.contains('is-hidden')) {
+      banner.classList.add('is-hidden');
+    }
+  };
+
+  pubsub.checkTopicTaxonomySuggestion = function () {
+    var m = pubsub.suggestionMachine;
+    if (!m || m.taxonomyState !== 'pending') {
+      return;
+    }
+    if (document.getElementById('tbProp4')) {
+      m.taxonomyState = 'done';
+      return;
+    }
+    if (m.advancedPublishCount >= 3 && !m.advancedPayloadEdited) {
+      m.taxonomyState = 'suggested';
+      pubsub.showActionSuggestionBanner(
+        'topic_taxonomy',
+        'Topic Taxonomy Change',
+        'Include message sentiment as a new property level to the topic taxonomy?'
+      );
+    }
+  };
+
+  pubsub.dispatchSuggestionEvent = function (eventName) {
+    var m = pubsub.suggestionMachine;
+    if (!m) {
+      return;
+    }
+
+    if (eventName === 'advanced_mode_selected') {
+      m.advancedTried = true;
+      if (m.tryAdvancedState === 'pending' || m.tryAdvancedState === 'suggested') {
+        m.tryAdvancedState = 'done';
+      }
+      if (m.activeSuggestion === 'try_advanced') {
+        pubsub.hideActionSuggestionBanner();
+      }
+      pubsub.checkTopicTaxonomySuggestion();
+      return;
+    }
+
+    if (eventName === 'basic_publish_success') {
+      if (m.advancedTried || m.tryAdvancedState !== 'pending') {
+        return;
+      }
+      m.basicPublishCount += 1;
+      if (m.basicPublishCount >= 3) {
+        m.tryAdvancedState = 'suggested';
+        pubsub.showActionSuggestionBanner(
+          'try_advanced',
+          'Try Advanced Mode?',
+          'How about trying an advanced topic taxonomy and payload now?'
+        );
+      }
+      return;
+    }
+
+    if (eventName === 'advanced_publish_success') {
+      m.advancedPublishCount += 1;
+      pubsub.checkTopicTaxonomySuggestion();
+      return;
+    }
+
+    if (eventName === 'advanced_payload_user_changed') {
+      m.advancedPayloadEdited = true;
+      pubsub.checkTopicTaxonomySuggestion();
+      return;
+    }
+
+    if (eventName === 'suggestion_accept') {
+      var active = m.activeSuggestion;
+      if (!active) {
+        return;
+      }
+      pubsub.hideActionSuggestionBanner();
+      if (active === 'try_advanced') {
+        m.tryAdvancedState = 'done';
+        var advRadio = document.querySelector('input[name="publishStyle"][value="advanced"]');
+        if (advRadio) {
+          advRadio.checked = true;
+          pubsub.togglePublishStyle();
+        }
+      } else if (active === 'topic_taxonomy') {
+        m.taxonomyState = 'done';
+        pubsub.enableSentimentPropertyLevel();
+      }
+      return;
+    }
+
+    if (eventName === 'suggestion_decline') {
+      var activeSuggestion = m.activeSuggestion;
+      if (!activeSuggestion) {
+        return;
+      }
+      if (activeSuggestion === 'try_advanced') {
+        m.tryAdvancedState = 'dismissed';
+      } else if (activeSuggestion === 'topic_taxonomy') {
+        m.taxonomyState = 'dismissed';
+      }
+      pubsub.hideActionSuggestionBanner();
+    }
+  };
+
   pubsub.togglePublishStyle = function () {
     var adv = document.getElementById('advancedOptions');
     var sel = document.querySelector('input[name="publishStyle"]:checked');
@@ -348,6 +582,7 @@
       pubsub.anim.publishStyleTimer = null;
     }
     if (sel.value === 'advanced') {
+      pubsub.dispatchSuggestionEvent('advanced_mode_selected');
       if (builderSection) {
         builderSection.classList.add('is-collapsed');
       }
@@ -380,10 +615,112 @@
     }
   };
 
+  pubsub.getTopicBuilderFieldIds = function () {
+    var ids = ['tbDomain', 'tbNoun', 'tbVerb', 'tbProp1', 'tbProp2'];
+    ids.push('tbProp3');
+    if (document.getElementById('tbProp4')) {
+      ids.push('tbProp4');
+    }
+    return ids;
+  };
+
+  pubsub.normalizeTopicToken = function (value) {
+    return String(value || '').toLowerCase().trim().replace(/\s+/g, '-');
+  };
+
+  pubsub.normalizeTopicTokenKeepCase = function (value) {
+    return String(value || '').trim().replace(/\s+/g, '-');
+  };
+
+  pubsub.getPayloadSentimentToken = function () {
+    var payloadEl = document.getElementById('payloadAdvanced');
+    if (!payloadEl) {
+      return '';
+    }
+
+    try {
+      var obj = JSON.parse(payloadEl.value);
+      if (!obj || typeof obj !== 'object' || Array.isArray(obj)) {
+        return '';
+      }
+      if (!Object.prototype.hasOwnProperty.call(obj, 'sentiment')) {
+        return '';
+      }
+      return pubsub.normalizeTopicToken(obj.sentiment);
+    } catch (e) {
+      return '';
+    }
+  };
+
+  pubsub.syncPayloadLinkedTopicProperties = function () {
+    var payloadEl = document.getElementById('payloadAdvanced');
+    var prop3El = document.getElementById('tbProp3');
+    var prop4El = document.getElementById('tbProp4');
+    if (!payloadEl || !prop3El) {
+      return;
+    }
+
+    try {
+      var obj = JSON.parse(payloadEl.value);
+      if (!obj || typeof obj !== 'object' || Array.isArray(obj)) {
+        return;
+      }
+
+      if (prop4El) {
+        if (Object.prototype.hasOwnProperty.call(obj, 'sentiment')) {
+          prop3El.value = pubsub.normalizeTopicToken(obj.sentiment);
+        }
+        if (Object.prototype.hasOwnProperty.call(obj, 'msgId')) {
+          prop4El.value = pubsub.normalizeTopicTokenKeepCase(obj.msgId);
+        }
+      } else if (Object.prototype.hasOwnProperty.call(obj, 'msgId')) {
+        prop3El.value = pubsub.normalizeTopicTokenKeepCase(obj.msgId);
+      }
+      pubsub.generateTopicFromBuilder(false);
+    } catch (e) { /* ignore */ }
+  };
+
+  pubsub.enableSentimentPropertyLevel = function () {
+    var existing = document.getElementById('tbProp4');
+    if (existing) {
+      pubsub.syncPayloadLinkedTopicProperties();
+      return;
+    }
+
+    var grid = document.querySelector('#advancedOptions .topic-builder-grid');
+    var prop3El = document.getElementById('tbProp3');
+    var clearWrap = grid ? grid.querySelector('.topic-builder-clear-wrap') : null;
+    if (!grid || !clearWrap || !prop3El) {
+      return;
+    }
+
+    var wrap = document.createElement('div');
+    var label = document.createElement('label');
+    var input = document.createElement('input');
+    var previousMsgId = prop3El.value;
+
+    label.setAttribute('for', 'tbProp4');
+    label.textContent = 'Property';
+    input.id = 'tbProp4';
+    input.type = 'text';
+    input.placeholder = '{metadata-4}';
+    input.value = previousMsgId || '';
+
+    wrap.appendChild(label);
+    wrap.appendChild(input);
+    grid.insertBefore(wrap, clearWrap);
+
+    input.addEventListener('input', function () { pubsub.generateTopicFromBuilder(false); });
+
+    pubsub.suggestionMachine.taxonomyState = 'done';
+    pubsub.syncPayloadLinkedTopicProperties();
+    pubsub.generateTopicFromBuilder(false);
+  };
+
   pubsub.generateTopicFromBuilder = function (setToPubTopic) {
     if (setToPubTopic === undefined) { setToPubTopic = false; }
     var parts = [];
-    ['tbDomain', 'tbNoun', 'tbVerb', 'tbProp1', 'tbProp2', 'tbProp3'].forEach(function (id) {
+    pubsub.getTopicBuilderFieldIds().forEach(function (id) {
       var v = document.getElementById(id);
       if (v && v.value && v.value.trim()) {
         parts.push(v.value.trim());
@@ -481,6 +818,7 @@
     var defaults = pubsub.getTopicBuilderDefaults();
     pubsub.applyTopicBuilderValues(defaults);
     pubsub.syncAdvancedPayloadExistingFieldsFromTopicDefaults(defaults);
+    pubsub.syncPayloadLinkedTopicProperties();
   };
 
   pubsub.syncAdvancedPayloadFromTopicDefaults = function (defaults) {
@@ -558,7 +896,7 @@
   };
 
   pubsub.clearTopicBuilder = function () {
-    ['tbDomain','tbNoun', 'tbVerb', 'tbProp1', 'tbProp2', 'tbProp3', 'generatedTopic'].forEach(function (id) {
+    ['tbDomain','tbNoun', 'tbVerb', 'tbProp1', 'tbProp2', 'tbProp3', 'tbProp4', 'generatedTopic'].forEach(function (id) {
       var el = document.getElementById(id);
       if (el) { el.value = ''; }
     });
@@ -576,6 +914,9 @@
     var verb = document.getElementById('tbVerb').value.trim();
     var prop1 = document.getElementById('tbProp1').value.trim();
     var prop3 = document.getElementById('tbProp3').value.trim();
+    var prop4El = document.getElementById('tbProp4');
+    var hasProp4 = !!prop4El;
+    var msgIdProp = hasProp4 ? (prop4El.value || '').trim() : prop3;
 
     // Check if Advanced mode is active and fields are not empty
     var isAdvanced = document.querySelector('input[name="publishStyle"]:checked').value === 'advanced';
@@ -591,19 +932,27 @@
       return;
     }
 
-    // Generate three suggested patterns
+    // Generate suggested patterns
     var suggestions = [];
     if (domain) {
       suggestions.push(domain + '/>');
     }
     if (domain && noun && prop1) {
-      suggestions.push(domain + '/' + noun + '/*/' + prop1 + '/*/*');
+      if (hasProp4) {
+        suggestions.push(domain + '/' + noun + '/*/' + prop1 + '/*/*/*/*');
+      } else {
+        suggestions.push(domain + '/' + noun + '/*/' + prop1 + '/*/*');
+      }
     }
     if (domain && noun && verb) {
       suggestions.push(domain + '/' + noun + '/' + verb + '/>');
     }
-    if (domain && noun && prop3) {
-      suggestions.push(domain + '/' + noun + '/*/*/*/' + prop3);
+    if (domain && noun && msgIdProp) {
+      if (hasProp4) {
+        suggestions.push(domain + '/' + noun + '/*/*/*/*/' + msgIdProp);
+      } else {
+        suggestions.push(domain + '/' + noun + '/*/*/*/' + msgIdProp);
+      }
     }
 
     // Render pills
@@ -1283,6 +1632,11 @@
 
     try {
       pubsub.session.send(msg);
+      if (style === 'basic') {
+        pubsub.dispatchSuggestionEvent('basic_publish_success');
+      } else if (style === 'advanced') {
+        pubsub.dispatchSuggestionEvent('advanced_publish_success');
+      }
       if (!pubsub.hasActiveSubscriptionCoverage(topic)) {
         pubsub.setPubStatus('info', 'Published', 'Hint: The topic of this published message is not currently covered in your subscription interest.');
       } else {

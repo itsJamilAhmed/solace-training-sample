@@ -417,6 +417,46 @@ textarea:focus {
   margin-top: 12px;
 }
 
+.suggestion-actions {
+  margin-top: 8px;
+  display: flex;
+  gap: 8px;
+}
+
+.action-suggestion-banner {
+  border-color: #d7c3f2;
+  background: #f8f2ff;
+  animation: suggestion-slide-in-right 460ms ease-out;
+}
+
+.action-suggestion-banner .status-title {
+  color: #4a2a7a;
+}
+
+.action-suggestion-banner .status-hint {
+  color: #5d4685;
+}
+
+.action-suggestion-banner .suggestion-actions .ports-btn-primary {
+  background: #6f42c1;
+  border-color: #6f42c1;
+}
+
+.action-suggestion-banner .suggestion-actions .ports-btn-primary:hover {
+  background: #6037ad;
+}
+
+@keyframes suggestion-slide-in-right {
+  from {
+    opacity: 0;
+    transform: translateX(34px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
 /* Mobile header compaction */
 @media (max-width: 500px) {
   .header {
@@ -479,8 +519,13 @@ textarea:focus {
 
 #step4Card .topic-builder-grid {
   margin-top: 10px;
-  grid-template-columns: repeat(7, 1fr);
+  grid-template-columns: repeat(8, 1fr);
   gap: 8px;
+}
+
+#step4Card .topic-builder-grid input[type="text"] {
+  width: calc(100% + 1ch);
+  max-width: calc(100% + 1ch);
 }
 
 #step4Card .topic-builder-clear-wrap {
@@ -524,6 +569,11 @@ textarea:focus {
 
   #step4Card .topic-builder-grid > div {
     width: 100%;
+  }
+
+  #step4Card .topic-builder-grid input[type="text"] {
+    width: 100%;
+    max-width: 100%;
   }
 
   /* Stack form-grid-single (topic builder and payload area) into single column */
