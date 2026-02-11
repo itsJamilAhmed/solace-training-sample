@@ -707,6 +707,26 @@
     return ti === t.length;
   };
 
+  pubsub.hasActiveSubscriptionCoverage = function (topic) {
+    var patterns = Object.keys(pubsub.subscriptions);
+    var i;
+
+    for (i = 0; i < patterns.length; i += 1) {
+      var pattern = patterns[i];
+      var entry = pubsub.subscriptions[pattern];
+
+      if (!entry || entry.state !== 'active') {
+        continue;
+      }
+
+      if (pubsub.topicMatchesPattern(topic, pattern)) {
+        return true;
+      }
+    }
+
+    return false;
+  };
+
   pubsub.clearMessages = function () {
     var el = document.getElementById('messages');
     if (el) {
@@ -1136,6 +1156,8 @@
       payload = document.getElementById('payload').value;
     }
 
+    topic = (topic || '').trim();
+
     if (!topic) {
       pubsub.setPubStatus('warn', 'Missing topic', 'Enter a topic in Step 4 before publishing.');
       pubsub.log('Cannot publish: please specify a topic.');
@@ -1176,7 +1198,11 @@
 
     try {
       pubsub.session.send(msg);
-      pubsub.clearPubStatus();
+      if (!pubsub.hasActiveSubscriptionCoverage(topic)) {
+        pubsub.setPubStatus('info', 'Published', 'Hint: The topic of this published message is not currently covered in your subscription interest.');
+      } else {
+        pubsub.clearPubStatus();
+      }
       pubsub.log('Published message to: ' + topic);
     } catch (e2) {
       var detail2 = (e2 && e2.message) ? e2.message : e2.toString();
