@@ -657,9 +657,9 @@
   };
 
   pubsub.statusLabel = function (state) {
-    if (state === 'pending_add') { return 'Subscribing…'; }
+    if (state === 'pending_add') { return 'Subscribing...'; }
     if (state === 'active') { return 'Subscribed'; }
-    if (state === 'pending_remove') { return 'Unsubscribing…'; }
+    if (state === 'pending_remove') { return 'Unsubscribing...'; }
     if (state === 'inactive') { return 'Unsubscribed'; }
     if (state === 'disconnected') { return 'Not Active (Disconnected)'; }
     if (state === 'error') { return 'Error'; }
@@ -668,7 +668,7 @@
 
   pubsub.formatTime = function (ts) {
     if (!ts) {
-      return '—';
+      return '-';
     }
     var d = new Date(ts);
     return ('0' + d.getHours()).slice(-2) + ':' +
@@ -1166,7 +1166,7 @@
 
   pubsub.connectToggle = function () {
     if (pubsub.state.connecting) {
-      pubsub.setStatus('info', 'Connecting', 'Please wait…');
+      pubsub.setStatus('info', 'Connecting', 'Please wait...');
       pubsub.log('Connect already in progress.');
       return;
     }
@@ -1182,7 +1182,7 @@
     }
 
     pubsub.state.connecting = true;
-    pubsub.setStatus('info', 'Connecting', 'Opening a session to the broker…');
+    pubsub.setStatus('info', 'Connecting', 'Opening a session to the broker...');
 
     pubsub.updateUi();
     pubsub.createSession(c);
@@ -1209,7 +1209,7 @@
   pubsub.disconnect = function () {
     if (pubsub.session) {
       try {
-        pubsub.setStatus('warn', 'Disconnecting', 'Ending the session…');
+        pubsub.setStatus('warn', 'Disconnecting', 'Ending the session...');
         pubsub.session.disconnect();
       } catch (e) {
         pubsub.log(e.toString());
