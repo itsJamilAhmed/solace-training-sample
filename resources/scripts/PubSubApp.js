@@ -389,10 +389,16 @@
           countryLong = regionName;
         }
 
-        var languageDisplay = new Intl.DisplayNames([navigator.language || 'en'], { type: 'language' });
-        var languageName = languageDisplay.of(languageCode);
-        if (languageName) {
-          languageLong = languageName;
+        // Prefer autonym (native language name), then browser locale name.
+        var localeCandidates = [languageCode, navigator.language || 'en', 'en'];
+        var li;
+        for (li = 0; li < localeCandidates.length; li += 1) {
+          var languageDisplay = new Intl.DisplayNames([localeCandidates[li]], { type: 'language' });
+          var languageName = languageDisplay.of(languageCode);
+          if (languageName && languageName.toLowerCase() !== languageCode.toLowerCase()) {
+            languageLong = languageName;
+            break;
+          }
         }
       }
     } catch (e) { /* ignore */ }
