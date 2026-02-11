@@ -399,12 +399,12 @@
 
     var countryKebab = String(countryLong)
       .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-+|-+$/g, '');
+      .trim()
+      .replace(/\s+/g, '-');
     var languageKebab = String(languageLong)
       .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-+|-+$/g, '');
+      .trim()
+      .replace(/\s+/g, '-');
 
     var randomNumber = String(Math.floor(Math.random() * 9999) + 1).padStart(4, '0');
 
