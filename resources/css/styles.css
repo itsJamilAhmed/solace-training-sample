@@ -178,6 +178,10 @@ textarea:focus {
   max-width: none;
 }
 
+.sub-input-col {
+  flex: 1 1 auto;
+}
+
 .sub-input-row .sub-btn {
   flex: 0 0 auto;
   margin-bottom: 8px;
@@ -269,6 +273,28 @@ textarea:focus {
   margin: 6px 0 10px;
 }
 
+#subsEmptyHint.subs-empty-hint-spaced {
+  margin: 18px 0 10px;
+}
+
+.pub-sub-suggestions-label {
+  margin-top: 0;
+  margin-bottom: 8px;
+}
+
+.pub-sub-suggestions-title {
+  font-weight: 400;
+  font-size: 12px;
+  display: block;
+  margin-bottom: 0;
+}
+
+.pub-sub-suggestions-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 /* Inline status/help banner */
 .status-banner {
   max-width: 1000px;
@@ -342,12 +368,54 @@ textarea:focus {
   white-space: nowrap;
 }
 
-#step4Card .style-toggle label {
+#step4Card .style-toggle label,
+#step4Card .delivery-toggle label {
   margin: 0;
   font-size: 13px;
 }
 
-#step4Card .style-toggle input[type="radio"] {
+#step4Card .step4-top-row,
+#step4Card .step4-adv-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+#step4Card .section-desc-tight {
+  margin: 0;
+}
+
+#step4Card .style-toggle-offset {
+  margin-left: 12px;
+}
+
+#step4Card .toggle-group-title,
+#step4Card .topic-builder-title {
+  font-weight: 600;
+}
+
+#step4Card .radio-option-spaced {
+  margin-right: 6px;
+}
+
+#step4Card .form-grid-top-gap {
+  margin-top: 10px;
+}
+
+#step4Card .topic-builder-grid {
+  margin-top: 10px;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 8px;
+}
+
+#step4Card .topic-builder-clear-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#step4Card .style-toggle input[type="radio"],
+#step4Card .delivery-toggle input[type="radio"] {
   width: 14px;
   height: 14px;
   vertical-align: middle;
@@ -357,35 +425,35 @@ textarea:focus {
 @media (max-width: 520px) {
   /* Stack the style toggle vertically */
   #step4Card .style-toggle {
-    display: flex !important;
-    flex-direction: column !important;
-    align-items: flex-start !important;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
     margin-top: 8px;
-    gap: 6px !important;
+    gap: 6px;
   }
 
   #step4Card .style-toggle label {
-    display: flex !important;
-    align-items: center !important;
-    margin-right: 0 !important;
-    margin-bottom: 0 !important;
+    display: flex;
+    align-items: center;
+    margin-right: 0;
+    margin-bottom: 0;
     gap: 6px;
   }
 
   /* Stack the topic taxonomy builder grid from 7 columns to single column */
-  #step4Card .card-body > div > .form-grid[style*="repeat(7"] {
-    grid-template-columns: 1fr !important;
-    gap: 8px !important;
+  #step4Card .topic-builder-grid {
+    grid-template-columns: 1fr;
+    gap: 8px;
   }
 
-  #step4Card .card-body > div > .form-grid[style*="repeat(7"] > div {
+  #step4Card .topic-builder-grid > div {
     width: 100%;
   }
 
   /* Stack form-grid-single (topic builder and payload area) into single column */
   #step4Card .form-grid-single {
-    grid-template-columns: 1fr !important;
-    gap: 6px 0 !important;
+    grid-template-columns: 1fr;
+    gap: 6px 0;
   }
 
   #step4Card .form-grid-single label {
@@ -394,14 +462,14 @@ textarea:focus {
 
   #step4Card .form-grid-single input,
   #step4Card .form-grid-single textarea {
-    width: 100% !important;
+    width: 100%;
     max-width: none;
   }
 
   /* Keep delivery toggle inline but ensure label alignment */
   #step4Card .delivery-toggle label {
-    display: flex !important;
-    align-items: center !important;
+    display: flex;
+    align-items: center;
     gap: 6px;
   }
 }
@@ -412,17 +480,6 @@ textarea:focus {
   align-items: center;
   gap: 8px;
   white-space: nowrap;
-}
-
-#step4Card .delivery-toggle label {
-  margin: 0;
-  font-size: 13px;
-}
-
-#step4Card .delivery-toggle input[type="radio"] {
-  width: 14px;
-  height: 14px;
-  vertical-align: middle;
 }
 
 /* Advanced panel visual separation and spacing */

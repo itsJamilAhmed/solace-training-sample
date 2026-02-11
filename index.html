@@ -109,7 +109,7 @@
           </p>
 
           <div class="sub-input-row">
-            <div style="flex: 1 1 auto;">
+            <div class="sub-input-col">
               <label for="subTopic">Subscription Pattern</label>
               <input class="sub-input" id="subTopic" type="text" value="workshop/*" />
             </div>
@@ -117,12 +117,12 @@
             <button type="button" class="ports-btn ports-btn-primary sub-btn" id="addSub">Add Subscription</button>
           </div>
 
-          <div id="pubSubSuggestionsLabel"style="margin-top: 0px;">
-            <label style="font-weight: 400; font-size: 12px; display: block; margin-bottom: 0px;">Suggested Subscription Patterns:</label>
-            <div id="pubSubSuggestions" style="display: flex; flex-wrap: wrap; gap: 8px;"></div>
+          <div id="pubSubSuggestionsLabel" class="pub-sub-suggestions-label">
+            <label class="pub-sub-suggestions-title">Suggested Subscription Patterns:</label>
+            <div id="pubSubSuggestions" class="pub-sub-suggestions-list"></div>
           </div>
 
-          <div id="subsEmptyHint" style="margin-top: 18px;">(No subscriptions yet)</div>
+          <div id="subsEmptyHint" class="subs-empty-hint-spaced">(No subscriptions yet)</div>
 
           <table class="subs-table is-hidden" id="subsTable">
             <thead>
@@ -149,18 +149,18 @@
       <details class="card" id="step4Card">
         <summary>Step 4: Publish a message</summary>
         <div class="card-body">
-          <div style="display:flex;align-items:center;justify-content:space-between;">
-            <p class="section-desc" style="margin:0;">Publish messages to a topic. Subscribers matching the topic will receive them.</p>
-            <div class="style-toggle" style="margin-left:12px;">
-              <label style="font-weight:600;margin-right:8px;">Topic Taxonomy Style</label>
-              <label style="margin-right:6px;"><input type="radio" name="publishStyle" value="basic" checked /> Basic</label>
+          <div class="step4-top-row">
+            <p class="section-desc section-desc-tight">Publish messages to a topic. Subscribers matching the topic will receive them.</p>
+            <div class="style-toggle style-toggle-offset">
+              <label class="toggle-group-title">Topic Taxonomy Style</label>
+              <label class="radio-option-spaced"><input type="radio" name="publishStyle" value="basic" checked /> Basic</label>
               <label><input type="radio" name="publishStyle" value="advanced" /> Advanced</label>
             </div>
           </div>
 
           <!-- Basic mode fields -->
           <div id="basicOptions">
-            <div class="form-grid form-grid-single" style="margin-top:10px;">
+            <div class="form-grid form-grid-single form-grid-top-gap">
               <label for="pubTopic">Topic</label>
               <input id="pubTopic" type="text" value="workshop/message" />
 
@@ -170,11 +170,11 @@
           </div>
 
           <div id="advancedOptions" class="is-hidden">
-            <div style="display:flex;align-items:center;justify-content:space-between;">
-              <div style="font-weight:600;">Topic Taxonomy Builder</div>
+            <div class="step4-adv-header-row">
+              <div class="topic-builder-title">Topic Taxonomy Builder</div>
             </div>
 
-            <div class="form-grid" style="margin-top:10px;grid-template-columns: repeat(7, 1fr);gap:8px;">
+            <div class="form-grid topic-builder-grid">
               <div>
                 <label for="tbDomain">Domain</label>
                 <input id="tbDomain" type="text" placeholder="{app-domain}" value="workshop"/>
@@ -199,12 +199,12 @@
                 <label for="tbProp3">Property</label>
                 <input id="tbProp3" type="text" placeholder="{metadata-3}" value="0001" />
               </div>
-              <div style="display:flex;align-items:center;justify-content:center;">
+              <div class="topic-builder-clear-wrap">
                 <button type="button" class="ports-btn" id="clearTopicBuilder">Clear All</button>
               </div>
             </div>
 
-            <div class="form-grid form-grid-single" style="margin-top:10px;">
+            <div class="form-grid form-grid-single form-grid-top-gap">
               <label for="generatedTopic">Topic</label>
               <input id="generatedTopic" type="text" />
 
@@ -222,10 +222,10 @@
 }</textarea>
             </div>
 
-            <div class="form-grid form-grid-single" style="margin-top:10px;">
+            <div class="form-grid form-grid-single form-grid-top-gap">
               <label for="advDeliveryMode">Delivery Mode</label>
               <div class="delivery-toggle" id="advDeliveryMode">
-                <label style="margin-right:6px;"><input type="radio" name="advDeliveryMode" value="DIRECT" checked /> Direct</label>
+                <label class="radio-option-spaced"><input type="radio" name="advDeliveryMode" value="DIRECT" checked /> Direct</label>
                 <label><input type="radio" name="advDeliveryMode" value="PERSISTENT" /> Persistent</label>
               </div>
             </div>
