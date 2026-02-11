@@ -460,6 +460,8 @@
     } else {
       if (!adv.classList.contains('is-hidden')) { adv.classList.add('is-hidden'); }
       if (basic) { basic.classList.remove('is-hidden'); }
+      // when switching to basic, hide suggestions
+      pubsub.updatePubSubSuggestions();
     }
   };
 
@@ -479,12 +481,76 @@
       var pubEl = document.getElementById('pubTopic');
       if (pubEl) { pubEl.value = topic; }
     }
+    pubsub.updatePubSubSuggestions();
   };
 
   pubsub.clearTopicBuilder = function () {
     ['tbDomain','tbNoun', 'tbVerb', 'tbProp1', 'tbProp2', 'tbProp3', 'generatedTopic'].forEach(function (id) {
       var el = document.getElementById(id);
       if (el) { el.value = ''; }
+    });
+    pubsub.updatePubSubSuggestions();
+  };
+
+  pubsub.updatePubSubSuggestions = function () {
+    var suggestionsEl = document.getElementById('pubSubSuggestions');
+    var suggestionsLabelEl = document.getElementById('pubSubSuggestionsLabel');
+    if (!suggestionsEl) { return; }
+
+    // Get values from builder fields
+    var domain = document.getElementById('tbDomain').value.trim();
+    var noun = document.getElementById('tbNoun').value.trim();
+    var verb = document.getElementById('tbVerb').value.trim();
+    var prop1 = document.getElementById('tbProp1').value.trim();
+
+    // Check if Advanced mode is active and fields are not empty
+    var isAdvanced = document.querySelector('input[name="publishStyle"]:checked').value === 'advanced';
+    var hasFields = domain || noun || verb || prop1;
+
+    // Clear suggestions
+    while (suggestionsEl.firstChild) {
+      suggestionsEl.removeChild(suggestionsEl.firstChild);
+    }
+
+    if (!isAdvanced || !hasFields) {
+      suggestionsEl.style.display = 'none';
+      if (suggestionsLabelEl) { suggestionsLabelEl.style.display = 'none'; }
+      return;
+    }
+
+    // Generate three suggested patterns
+    var suggestions = [];
+    if (domain) {
+      suggestions.push(domain + '/>');
+    }
+    if (domain && noun && prop1) {
+      suggestions.push(domain + '/' + noun + '/*/' + prop1 + '/*/*');
+    }
+    if (domain && noun && verb) {
+      suggestions.push(domain + '/' + noun + '/' + verb + '/>');
+    }
+
+    // Render pills
+    suggestionsEl.style.display = suggestions.length > 0 ? 'flex' : 'none';
+    if (suggestionsLabelEl) {
+      suggestionsLabelEl.style.display = suggestions.length > 0 ? 'block' : 'none';
+    }
+    suggestions.forEach(function (pattern) {
+      var pill = document.createElement('button');
+      pill.type = 'button';
+      pill.className = 'pub-sub-suggestion';
+      pill.textContent = pattern;
+      pill.addEventListener('click', function (e) {
+        e.preventDefault();
+        var subTopicEl = document.getElementById('subTopic');
+        if (subTopicEl) {
+          subTopicEl.value = pattern;
+          // Optional: auto-focus the Add Subscription button to encourage action
+          var addSubBtn = document.getElementById('addSub');
+          if (addSubBtn) { addSubBtn.focus(); }
+        }
+      });
+      suggestionsEl.appendChild(pill);
     });
   };
 

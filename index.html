@@ -117,7 +117,12 @@
             <button type="button" class="ports-btn ports-btn-primary sub-btn" id="addSub">Add Subscription</button>
           </div>
 
-          <div id="subsEmptyHint">(No subscriptions yet)</div>
+          <div id="pubSubSuggestionsLabel"style="margin-top: 0px;">
+            <label style="font-weight: 400; font-size: 12px; display: block; margin-bottom: 0px;">Suggested Subscription Patterns:</label>
+            <div id="pubSubSuggestions" style="display: flex; flex-wrap: wrap; gap: 8px;"></div>
+          </div>
+
+          <div id="subsEmptyHint" style="margin-top: 18px;">(No subscriptions yet)</div>
 
           <table class="subs-table is-hidden" id="subsTable">
             <thead>

@@ -232,6 +232,26 @@ textarea:focus {
   color: #333;
 }
 
+/* Clickable subscription suggestion pill */
+.pub-sub-suggestion {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 999px;
+  border: 1px solid #0071c5;
+  background: #e3f2fd;
+  font-size: 13px;
+  font-weight: 400;
+  color: #0071c5;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.pub-sub-suggestion:hover {
+  background: #0071c5;
+  color: white;
+  box-shadow: 0 2px 8px rgba(0, 113, 197, 0.3);
+}
+
 /* Textareas and action rows */
 #messages, #log {
   max-width: 1000px;
