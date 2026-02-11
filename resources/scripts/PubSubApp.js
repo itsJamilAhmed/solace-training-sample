@@ -391,14 +391,27 @@
 
         // Prefer autonym (native language name), then browser locale name.
         var localeCandidates = [languageCode, navigator.language || 'en', 'en'];
+        var preferredLanguageName = '';
         var li;
         for (li = 0; li < localeCandidates.length; li += 1) {
           var languageDisplay = new Intl.DisplayNames([localeCandidates[li]], { type: 'language' });
           var languageName = languageDisplay.of(languageCode);
-          if (languageName && languageName.toLowerCase() !== languageCode.toLowerCase()) {
-            languageLong = languageName;
+          if (!languageName || languageName.toLowerCase() === languageCode.toLowerCase()) {
+            continue;
+          }
+
+          // Prefer native-script labels when available, not transliterated ASCII.
+          if (/[^\u0000-\u007F]/.test(languageName)) {
+            preferredLanguageName = languageName;
             break;
           }
+
+          if (!preferredLanguageName) {
+            preferredLanguageName = languageName;
+          }
+        }
+        if (preferredLanguageName) {
+          languageLong = preferredLanguageName;
         }
       }
     } catch (e) { /* ignore */ }
