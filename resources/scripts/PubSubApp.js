@@ -49,6 +49,8 @@
     // Topic builder controls (advanced mode)
     var clearBtn = document.getElementById('clearTopicBuilder');
     if (clearBtn) { clearBtn.addEventListener('click', function () { pubsub.clearTopicBuilder(); }); }
+    var resetBtn = document.getElementById('resetTopicBuilder');
+    if (resetBtn) { resetBtn.addEventListener('click', function () { pubsub.resetTopicBuilderToDefaults(); }); }
 
     // Live update of generated topic as inputs change
     var tbIds = ['tbDomain', 'tbNoun', 'tbVerb', 'tbProp1', 'tbProp2', 'tbProp3'];
@@ -92,123 +94,9 @@
     pubsub.enableSmoothDetails();
     pubsub.togglePublishStyle();
 
-    // Try to auto-fill topic-builder from browser-only signals (no external calls)
-    try {
-      var navLang = (navigator.languages && navigator.languages[0]) || navigator.language || '';
-      var tz = (typeof Intl !== 'undefined' && Intl.DateTimeFormat && Intl.DateTimeFormat().resolvedOptions) ? (Intl.DateTimeFormat().resolvedOptions().timeZone || '') : '';
-      if (navLang) {
-        var parts = navLang.split(/[-_]/);
-        var primaryLang = parts[0] || '';
-        var region = (parts[1] || '');
-
-        // Determine a long country name from the region code (if available)
-        var countryLong = '';
-        try {
-          if (region) {
-            var regionCode = region.toUpperCase();
-            if (typeof Intl !== 'undefined' && Intl.DisplayNames) {
-              try {
-                var rd = new Intl.DisplayNames([navigator.language || 'en'], { type: 'region' });
-                var longName = rd.of(regionCode);
-                if (longName) { countryLong = longName; }
-              } catch (e) { /* ignore */ }
-            }
-            if (!countryLong) { countryLong = regionCode; }
-          }
-        } catch (e) { /* ignore */ }
-
-        var domainEl = document.getElementById('tbDomain');
-        var prop1El = document.getElementById('tbProp1');
-        var prop2El = document.getElementById('tbProp2');
-        var prop3El = document.getElementById('tbProp3');
-
-        // Normalize domain/region code for tbDomain (use lower-case region code)
-        var normalizedRegion = (region || '').toLowerCase();
-        if (domainEl && !domainEl.value && normalizedRegion) { domainEl.value = normalizedRegion; }
-
-        // Property 1: country name in lower-case kebab-case (remove spaces)
-        if (prop1El && countryLong) {
-          var kebab = countryLong.toLowerCase().replace(/\s+/g, '-').replace(/^-+|-+$/g, '');
-          prop1El.value = kebab;
-        }
-
-        // Property 2: language name in lower-case kebab-case (long form to match JSON)
-        if (prop2El && primaryLang) {
-          var displayLang = primaryLang;
-          try {
-            if (typeof Intl !== 'undefined' && Intl.DisplayNames) {
-              try {
-                var dn = new Intl.DisplayNames([navigator.language || 'en'], { type: 'language' });
-                var longName = dn.of(primaryLang);
-                if (longName) { displayLang = longName; }
-              } catch (e) { /* ignore */ }
-            }
-          } catch (e) { /* ignore */ }
-          var langKebab = displayLang.toLowerCase().replace(/\s+/g, '-').replace(/^-+|-+$/g, '');
-          prop2El.value = langKebab;
-        }
-
-        // Property 3: generate a random 4-digit id (0001-9999) used for msgId
-        var rndNum = Math.floor(Math.random() * 9999) + 1;
-        var rndStr = String(rndNum).padStart(4, '0');
-        if (prop3El) {
-          prop3El.value = rndStr;
-        }
-
-        // Update the JSON payload in advanced editor to include long language and country
-        try {
-          var payloadEl = document.getElementById('payloadAdvanced');
-          if (payloadEl) {
-            var cur = payloadEl.value.trim();
-            var obj = null;
-            try {
-              obj = cur ? JSON.parse(cur) : {};
-            } catch (e) {
-              obj = {};
-            }
-            if (!obj || typeof obj !== 'object') { obj = {}; }
-
-            // Language long form
-            if (primaryLang) {
-              var displayLang = primaryLang;
-              try {
-                if (typeof Intl !== 'undefined' && Intl.DisplayNames) {
-                  try {
-                    var dn = new Intl.DisplayNames([navigator.language || 'en'], { type: 'language' });
-                    var longName = dn.of(primaryLang);
-                    if (longName) { displayLang = longName; }
-                  } catch (e) { /* ignore */ }
-                }
-              } catch (e) { /* ignore */ }
-              obj.language = displayLang;
-            }
-
-            // Country long form
-            if (countryLong) { obj.country = countryLong; }
-
-            // Timezone
-            if (tz) { obj.timezone = tz; }
-
-            // Message ID and timestamp
-            try {
-              obj.msgId = rndStr;
-            } catch (e) { /* ignore */ }
-            try {
-              var now = new Date();
-              var iso = now.toISOString().replace(/\.\d{3}Z$/, 'Z');
-              obj.timestamp = iso;
-            } catch (e) { /* ignore */ }
-
-            payloadEl.value = JSON.stringify(obj, null, 2);
-          }
-        } catch (e) { /* ignore json update errors */ }
-
-        // Reflect into generated topic preview
-        pubsub.generateTopicFromBuilder(false);
-      }
-    } catch (e) {
-      /* ignore auto-fill errors */
-    }
+    var initialTopicDefaults = pubsub.getTopicBuilderDefaults();
+    pubsub.applyTopicBuilderValues(initialTopicDefaults);
+    pubsub.syncAdvancedPayloadFromTopicDefaults(initialTopicDefaults);
 
     pubsub.updateUi();
     pubsub.renderSubscriptions();
@@ -484,6 +372,145 @@
     pubsub.updatePubSubSuggestions();
   };
 
+  pubsub.getTopicBuilderDefaults = function () {
+    var navLang = (navigator.languages && navigator.languages[0]) || navigator.language || 'en-US';
+    var parts = String(navLang).split(/[-_]/);
+    var languageCode = (parts[0] || 'en').toLowerCase();
+    var regionCode = (parts[1] || 'US').toUpperCase();
+    var languageLong = languageCode;
+    var tz = (typeof Intl !== 'undefined' && Intl.DateTimeFormat && Intl.DateTimeFormat().resolvedOptions) ? (Intl.DateTimeFormat().resolvedOptions().timeZone || '') : '';
+
+    var countryLong = regionCode;
+    try {
+      if (typeof Intl !== 'undefined' && Intl.DisplayNames) {
+        var regionDisplay = new Intl.DisplayNames([navigator.language || 'en'], { type: 'region' });
+        var regionName = regionDisplay.of(regionCode);
+        if (regionName) {
+          countryLong = regionName;
+        }
+
+        var languageDisplay = new Intl.DisplayNames([navigator.language || 'en'], { type: 'language' });
+        var languageName = languageDisplay.of(languageCode);
+        if (languageName) {
+          languageLong = languageName;
+        }
+      }
+    } catch (e) { /* ignore */ }
+
+    var countryKebab = String(countryLong)
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '');
+    var languageKebab = String(languageLong)
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '');
+
+    var randomNumber = String(Math.floor(Math.random() * 9999) + 1).padStart(4, '0');
+
+    return {
+      tbDomain: 'workshop',
+      tbNoun: 'hello-message',
+      tbVerb: 'announced',
+      tbProp1: countryKebab || 'united-states',
+      tbProp2: languageKebab || 'english',
+      tbProp3: randomNumber,
+      countryLong: countryLong,
+      languageLong: languageLong,
+      timezone: tz
+    };
+  };
+
+  pubsub.applyTopicBuilderValues = function (values) {
+    ['tbDomain', 'tbNoun', 'tbVerb', 'tbProp1', 'tbProp2', 'tbProp3'].forEach(function (id) {
+      var el = document.getElementById(id);
+      if (el && values && Object.prototype.hasOwnProperty.call(values, id)) {
+        el.value = values[id];
+      }
+    });
+    pubsub.generateTopicFromBuilder(false);
+  };
+
+  pubsub.resetTopicBuilderToDefaults = function () {
+    var defaults = pubsub.getTopicBuilderDefaults();
+    pubsub.applyTopicBuilderValues(defaults);
+    pubsub.syncAdvancedPayloadExistingFieldsFromTopicDefaults(defaults);
+  };
+
+  pubsub.syncAdvancedPayloadFromTopicDefaults = function (defaults) {
+    var payloadEl = document.getElementById('payloadAdvanced');
+    if (!payloadEl || !defaults) {
+      return;
+    }
+
+    var cur = payloadEl.value.trim();
+    var obj = null;
+    try {
+      obj = cur ? JSON.parse(cur) : {};
+    } catch (e) {
+      obj = {};
+    }
+    if (!obj || typeof obj !== 'object') {
+      obj = {};
+    }
+
+    if (defaults.countryLong) {
+      obj.country = defaults.countryLong;
+    }
+    if (defaults.languageLong) {
+      obj.language = defaults.languageLong;
+    }
+    if (defaults.timezone) {
+      obj.timezone = defaults.timezone;
+    }
+    if (defaults.tbProp3) {
+      obj.msgId = defaults.tbProp3;
+    }
+
+    try {
+      obj.timestamp = new Date().toISOString().replace(/\.\d{3}Z$/, 'Z');
+    } catch (e2) { /* ignore */ }
+
+    payloadEl.value = JSON.stringify(obj, null, 2);
+  };
+
+  pubsub.syncAdvancedPayloadExistingFieldsFromTopicDefaults = function (defaults) {
+    var payloadEl = document.getElementById('payloadAdvanced');
+    if (!payloadEl || !defaults) {
+      return;
+    }
+
+    var obj;
+    try {
+      obj = JSON.parse(payloadEl.value);
+    } catch (e) {
+      return;
+    }
+    if (!obj || typeof obj !== 'object' || Array.isArray(obj)) {
+      return;
+    }
+
+    if (Object.prototype.hasOwnProperty.call(obj, 'country') && defaults.countryLong) {
+      obj.country = defaults.countryLong;
+    }
+    if (Object.prototype.hasOwnProperty.call(obj, 'language') && defaults.languageLong) {
+      obj.language = defaults.languageLong;
+    }
+    if (Object.prototype.hasOwnProperty.call(obj, 'timezone') && defaults.timezone) {
+      obj.timezone = defaults.timezone;
+    }
+    if (Object.prototype.hasOwnProperty.call(obj, 'msgId') && defaults.tbProp3) {
+      obj.msgId = defaults.tbProp3;
+    }
+    if (Object.prototype.hasOwnProperty.call(obj, 'timestamp')) {
+      try {
+        obj.timestamp = new Date().toISOString().replace(/\.\d{3}Z$/, 'Z');
+      } catch (e2) { /* ignore */ }
+    }
+
+    payloadEl.value = JSON.stringify(obj, null, 2);
+  };
+
   pubsub.clearTopicBuilder = function () {
     ['tbDomain','tbNoun', 'tbVerb', 'tbProp1', 'tbProp2', 'tbProp3', 'generatedTopic'].forEach(function (id) {
       var el = document.getElementById(id);
@@ -502,6 +529,7 @@
     var noun = document.getElementById('tbNoun').value.trim();
     var verb = document.getElementById('tbVerb').value.trim();
     var prop1 = document.getElementById('tbProp1').value.trim();
+    var prop3 = document.getElementById('tbProp3').value.trim();
 
     // Check if Advanced mode is active and fields are not empty
     var isAdvanced = document.querySelector('input[name="publishStyle"]:checked').value === 'advanced';
@@ -528,6 +556,9 @@
     }
     if (domain && noun && verb) {
       suggestions.push(domain + '/' + noun + '/' + verb + '/>');
+    }
+    if (domain && noun && prop3) {
+      suggestions.push(domain + '/' + noun + '/*/*/*/' + prop3);
     }
 
     // Render pills
